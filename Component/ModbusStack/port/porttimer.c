@@ -37,13 +37,13 @@ xMBPortTimersInit( USHORT usTim1Timerout50us )
 }
 
 
-inline void
+void
 vMBPortTimersEnable(  )
 {
     /* Enable the timer with the timeout passed to xMBPortTimersInit( ) */
 }
 
-inline void
+void
 vMBPortTimersDisable(  )
 {
     /* Disable any pending timers. */
