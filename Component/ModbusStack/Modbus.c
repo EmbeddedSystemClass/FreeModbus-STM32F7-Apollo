@@ -27,9 +27,14 @@
 #define REG_INPUT_START 1000
 #define REG_INPUT_NREGS 4
 
+#define REG_HOLDING_START 0x0000
+#define REG_HOLDING_NREGS 8
+
 /* ----------------------- Static variables ---------------------------------*/
 static USHORT   usRegInputStart = REG_INPUT_START;
 static USHORT   usRegInputBuf[REG_INPUT_NREGS];
+static USHORT   usRegHoldingBuf[REG_HOLDING_NREGS]
+= {0x147b,0x3f8e,0x55aa,0x400e,0x1eb8,0x4055,0x147b,0x408e};
 
 eMBErrorCode
 eMBRegInputCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs )
@@ -63,7 +68,46 @@ eMBErrorCode
 eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
                  eMBRegisterMode eMode )
 {
-    return MB_ENOREG;
+	eMBErrorCode eStatus = MB_ENOERR;
+
+	USHORT iRegIndex;
+
+	if( ( (int16_t)usAddress >= REG_HOLDING_START ) \
+	&& ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
+	{
+
+		iRegIndex = ( int16_t )( usAddress - REG_HOLDING_START);
+		 
+		switch ( eMode )
+		{
+
+		case MB_REG_READ:
+			while( usNRegs > 0 )
+			{
+				*pucRegBuffer++ = ( uint8_t )( usRegHoldingBuf[iRegIndex] >> 8 );
+				*pucRegBuffer++ = ( uint8_t )( usRegHoldingBuf[iRegIndex] & 0xFF );
+				iRegIndex++;
+				usNRegs--;
+			}
+			break;
+
+		case MB_REG_WRITE:
+			while( usNRegs > 0 )
+			{
+				usRegHoldingBuf[iRegIndex] = *pucRegBuffer++ << 8;
+				usRegHoldingBuf[iRegIndex] |= *pucRegBuffer++;
+				iRegIndex++;
+				usNRegs--;
+			}
+			break;
+		}
+	}
+	else
+	{
+		eStatus = MB_ENOREG;
+	}
+ 
+	return eStatus;
 }
 
 
